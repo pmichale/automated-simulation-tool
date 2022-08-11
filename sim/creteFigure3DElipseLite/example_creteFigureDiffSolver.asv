@@ -1,0 +1,162 @@
+clc, clear
+close all
+
+
+%% create the data for simulation
+n=10;
+model = 'pend_viscous_p1p2_M2019b';
+load_system(model)
+p1=5;
+p2=5;
+Simulink.BlockDiagram.buildRapidAcceleratorTarget(model);
+in(1:n^3) = Simulink.SimulationInput(model);
+p1 = linspace(0,10,n);
+p2 = linspace(0,10,n);
+phi0 = linspace(1,10,n);
+id=0;
+for i = n:-1:1
+    for j = n:-1:1
+        for k = n:-1:1
+            id=id+1;
+            in(id)=in(id).setVariable('p1',p1(i));
+            in(id)=in(id).setVariable('p2',p2(j));
+            in(id)=in(id).setVariable('phi0',phi0(k));
+        end
+    end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% %% simulation settings
+% Ts=0.05; % time step for fixed step solver of the simulation
+% p1=0.5;
+% p2=50;
+% phi0=10;
+% n=8;
+% m=10;
+% % in = in.setModelParameter('RapidAcceleratorUpToDateCheck', 'off');
+% model = 'pend_viscous_p1p2_M2019b';
+% load_system(model)
+% Simulink.BlockDiagram.buildRapidAcceleratorTarget(model);
+% in(1:n) = Simulink.SimulationInput(model);
+% in(:)=in(:).setVariable('p1',p1);
+% in(:)=in(:).setVariable('p2',p2);
+% in(:)=in(:).setVariable('phi0',phi0);
+% Solvers={'ode45','ode23','ode113','ode15s','ode23s','ode23t','ode23tb','ode4'};
+% for i=1:length(Solvers)
+% 	in(i)=in(i).setModelParameter('Solver',Solvers{i});
+% end
+% 
+% 
+% 
+% %% simulace
+% tic
+% in2=in;
+% for j=1:m-1
+%     in2=[in2,in];
+% end
+% 
+% out = parsim(in2,    'ShowSimulationManager', 'off',... %1:14
+%                     'ShowProgress', 'off',... %on +3%
+%                     'UseFastRestart', 'off',...%off +78%
+%                     'RunInBackground', 'on',... %off +101%
+%                     'TransferBaseWorkspaceVariables','off'); %on +25%
+% wait(out) %206s
+% toc
+% t(1:n)=0;
+% for j=1:m
+%     for i=1:n
+%         [IDX, SIMout] = fetchNext(out);
+%         if j==1
+%         SIMOUT{i}=SIMout;
+%         end
+%         t(i)=t(i)+SIMout.SimulationMetadata.TimingInfo.TotalElapsedWallTime/m;
+%     end
+% end
+% hold on
+% 
+% %% plot y
+% f1=figure('Position',[1 1 800 600],'Color','w');
+% ax1=axes(f1);
+% hold on
+% grid on
+% interval=[6.2,6.8,12.8 13.1];
+% rectangle(ax1,'Position',[interval(1),interval(3),interval(2)-interval(1),interval(4)-interval(3)],'Curvature',0.5,...
+%     'FaceColor',[0.95 0.95 0.95])
+% for i=1:length(SIMOUT)-1
+%    plot(ax1,SIMOUT{i}.tout,SIMOUT{i}.yout)
+% end
+% i=i+1;
+% plot(ax1,SIMOUT{i}.tout,SIMOUT{i}.yout,'k--','LineWidth',1.5)
+% legend(Solvers)
+% % zoom
+% ax3=axes(f1,'Position',[0.7,0.17,0.2,0.2],'Color',[0.95 0.95 0.95]);
+% grid off
+% hold on
+% 
+% for i=1:length(SIMOUT)-1
+%    tout=SIMOUT{i}.tout(SIMOUT{i}.tout>interval(1)&SIMOUT{i}.tout<interval(2));
+%    y=SIMOUT{i}.yout(SIMOUT{i}.tout>interval(1)&SIMOUT{i}.tout<interval(2));
+%    plot(ax3,tout,y)
+% end
+% i=i+1;
+% tout=SIMOUT{i}.tout(SIMOUT{i}.tout>interval(1)&SIMOUT{i}.tout<interval(2));
+% y=SIMOUT{i}.yout(SIMOUT{i}.tout>interval(1)&SIMOUT{i}.tout<interval(2));
+% plot(ax3,tout,y,'k--','LineWidth',1.5)
+% 
+% 
+% box(ax3,'on')
+% ylim(ax3,interval([3,4]))
+% xlim(ax3,interval([1,2]))
+% % title(ax1,'Závislost volby øešièe na stavu modelu')
+% xlabel(ax1,'èas [s]')
+% ylabel(ax1,'phi [rad]')
+% % saveas(f1,'ZavislostResiceNaYdata.png')
+% 
+% 
+% 
+% %% plot error
+% timeVector=SIMOUT{n}.tout;
+% yVector=SIMOUT{n}.yout;
+% for i=1:length(SIMOUT)-1
+%     yNew=interp1(SIMOUT{i}.tout,SIMOUT{i}.yout,timeVector,'linear');
+%     e=abs(yVector-yNew);
+%     MSE(i)=mean(e.^2);
+% end
+% f2=figure('Position',[1 1 800 600],'Color','w');
+% ax2=axes(f2);
+% hold on
+% grid on
+% for i=1:length(SIMOUT)-1
+%     plot(ax2,t(i)*1000,MSE(i),'Marker','.','Color','k','MarkerSize',7)
+%     text(t(i)*1000,MSE(i),Solvers{i},'FontSize',10,'HorizontalAlignment','center','VerticalAlignment','bottom')
+% end
+% % ax2.XLim=[45 85];
+% % title(ax2,'Závislost volby øešièe na dobu a pøesnost simulace')
+% xlabel(ax2,'èas simulace [ms]')
+% ylabel(ax2,'MSE')
+% % saveas(f2,'ZavislostResiceNaCaseMSE.png')
+% 
+% %% export_fig settings
+% addpath('export_fig')
+% name1 = 'ZavislostResiceNaYdata';
+% name2 = 'ZavislostResiceNaCaseMSE';
+% pth_cur = [pwd '\'];
+% export_fig(f1,[pth_cur name1],'-pdf','-q101')
+% export_fig(f2,[pth_cur name2],'-pdf','-q101')
+% 
+% 
+% 
+
